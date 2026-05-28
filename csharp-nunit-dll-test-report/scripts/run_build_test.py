@@ -26,6 +26,11 @@ def main() -> int:
     parser.add_argument("--solution", default="")
     parser.add_argument("--output", default="build-test-result.json")
     parser.add_argument("--no-restore", action="store_true")
+    parser.add_argument(
+        "--fail-on-error",
+        action="store_true",
+        help="Return a non-zero exit code when restore/build/test fails. By default the JSON result is written and the command exits 0 so report generation can continue.",
+    )
     args = parser.parse_args()
 
     cwd = Path(args.repo).resolve()
@@ -44,7 +49,9 @@ def main() -> int:
     }
     Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if result["overall"] == "Pass" else 1
+    if args.fail_on_error and result["overall"] != "Pass":
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

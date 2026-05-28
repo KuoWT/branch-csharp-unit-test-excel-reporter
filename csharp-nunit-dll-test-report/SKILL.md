@@ -42,11 +42,11 @@ Defaults:
    - existing test project
    - existing NUnit package/version and naming style
 7. Generate or update NUnit tests.
-8. Run restore/build/test using the repo's existing commands where available:
+8. Run restore/build/test using the repo's existing commands where available. This step is required before generating the final report:
    - `dotnet restore`
    - `dotnet build`
    - `dotnet test`
-9. Generate the Excel report.
+9. Generate the Excel report even when restore/build/test fails. Failed commands must be recorded in the report and must make `Push Allowed = No`.
 10. Validate the Excel report:
    - The file opens with `openpyxl.load_workbook(...)`.
    - The workbook has at least one visible worksheet.
