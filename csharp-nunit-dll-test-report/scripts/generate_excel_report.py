@@ -6,7 +6,10 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from zipfile import ZipFile
+from xml.etree import ElementTree as ET
 
+import openpyxl
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
@@ -19,6 +22,7 @@ BLUE = PatternFill("solid", fgColor="D9EAF7")
 GRAY = PatternFill("solid", fgColor="E7E6E6")
 THIN = Side(style="thin", color="B7B7B7")
 BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
+PACKAGE_RELS_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
 
 
 def load_json(path: str) -> dict:
@@ -48,6 +52,22 @@ def result_fill(value):
     if text in {"fail", "no", "missing", "inconclusive", "不可 push"}:
         return RED
     return YELLOW
+
+
+def validate_xlsx(path: Path) -> None:
+    wb = openpyxl.load_workbook(path)
+    if not wb.sheetnames:
+        raise ValueError(f"{path} has no worksheets.")
+
+    with ZipFile(path) as archive:
+        bad_member = archive.testzip()
+        if bad_member:
+            raise ValueError(f"{path} contains a corrupt zip member: {bad_member}")
+
+        for rels_path in ("_rels/.rels", "xl/_rels/workbook.xml.rels"):
+            root = ET.fromstring(archive.read(rels_path))
+            if root.tag != f"{{{PACKAGE_RELS_NS}}}Relationships":
+                raise ValueError(f"{rels_path} uses an invalid relationships namespace.")
 
 
 def collect_scenarios(diff: dict, tests: list[dict]) -> list[dict]:
@@ -246,6 +266,7 @@ def main() -> int:
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     wb.save(output)
+    validate_xlsx(output)
     print(f"Saved {output}")
     print("PASS: 可 push" if push_allowed else "FAIL: 不可 push")
     return 0 if push_allowed else 2

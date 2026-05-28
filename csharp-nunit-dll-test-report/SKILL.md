@@ -47,7 +47,12 @@ Defaults:
    - `dotnet build`
    - `dotnet test`
 9. Generate the Excel report.
-10. Mark push allowed only when all gate rules pass.
+10. Validate the Excel report:
+   - The file opens with `openpyxl.load_workbook(...)`.
+   - The workbook has at least one visible worksheet.
+   - `unzip -t` reports no archive errors.
+   - Root and workbook relationship files use the package relationship namespace: `http://schemas.openxmlformats.org/package/2006/relationships`.
+11. Mark push allowed only when all gate rules pass.
 
 ## Test Rules
 
@@ -90,6 +95,8 @@ public class TargetClassTests
 ## Excel Report
 
 Generate a modern `.xlsx`; do not preserve legacy Excel binary format even if the department template file has an `.xlsx` extension.
+
+Do not hand-write `.xlsx` files by manually zipping OOXML parts. Always generate the workbook through `scripts/generate_excel_report.py` or another real Excel library such as `openpyxl`. A hand-written workbook can pass `unzip -t` but still fail in Excel when relationship namespaces or worksheet targets are invalid.
 
 The main workbook should contain:
 
