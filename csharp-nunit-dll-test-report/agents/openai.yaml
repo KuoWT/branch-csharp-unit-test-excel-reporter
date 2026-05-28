@@ -1,3 +1,3 @@
 display_name: C# NUnit DLL Test Report
-short_description: Generate NUnit positive/negative tests and Excel IT test reports from tag-to-branch diffs.
-default_prompt: 指定本地分支，根據最新 tag 與該分支 diff 產生 C# DLL 的 NUnit 正反相測試與 Excel 測試報告，並判斷是否可 push。
+short_description: Generate NUnit positive/negative tests and HTML IT test reports from tag-to-branch diffs.
+default_prompt: 指定本地分支，根據最新 tag 與該分支 diff 產生 C# DLL 的 NUnit 正反相測試與 HTML 測試報告，並判斷是否可 push。

@@ -1,6 +1,6 @@
 ---
 name: csharp-nunit-dll-test-report
-description: Use when generating positive and negative NUnit test cases and an Excel IT test report for a C# DLL project by comparing a local branch against the latest Git tag. The workflow analyzes changed C# functions, creates or updates NUnit tests, runs dotnet build/test, generates a department-style .xlsx report, and decides whether the branch is allowed to push.
+description: Use when generating positive and negative NUnit test cases and an HTML IT test report for a C# DLL project by comparing a local branch against the latest Git tag. The workflow analyzes changed C# functions, creates or updates NUnit tests, runs dotnet build/test, generates a department-style .html report, and decides whether the branch is allowed to push.
 ---
 
 # C# NUnit DLL Test Report
@@ -19,12 +19,12 @@ Optional:
 - IT tester (`IT 測試人員`)
 - Limited customer (`限定客戶`)
 - Limited package (`限定PACKAGE`)
-- Output path for the Excel report.
+- Output path for the HTML report.
 
 Defaults:
 - Base version is the latest reachable Git tag.
 - Test framework is NUnit.
-- Report output is a modern `.xlsx` file.
+- Report output is a standalone `.html` file.
 - Do not push automatically.
 
 ## Workflow
@@ -46,12 +46,11 @@ Defaults:
    - `dotnet restore`
    - `dotnet build`
    - `dotnet test`
-9. Generate the Excel report even when restore/build/test fails. Failed commands must be recorded in the report and must make `Push Allowed = No`.
-10. Validate the Excel report:
-   - The file opens with `openpyxl.load_workbook(...)`.
-   - The workbook has at least one visible worksheet.
-   - `unzip -t` reports no archive errors.
-   - Root and workbook relationship files use the package relationship namespace: `http://schemas.openxmlformats.org/package/2006/relationships`.
+9. Generate the HTML report even when restore/build/test fails. Failed commands must be recorded in the report and must make `Push Allowed = No`.
+10. Validate the HTML report:
+   - The file exists and is UTF-8 text.
+   - The file contains the required sections: `IT測試報告`, `測試明細`, `執行結果`, and `驗證資料`.
+   - All dynamic content is HTML-escaped.
 11. Mark push allowed only when all gate rules pass.
 
 ## Test Rules
@@ -92,13 +91,13 @@ public class TargetClassTests
 }
 ```
 
-## Excel Report
+## HTML Report
 
-Generate a modern `.xlsx`; do not preserve legacy Excel binary format even if the department template file has an `.xlsx` extension.
+Generate a standalone `.html` report. Do not generate `.xlsx` by default.
 
-Do not hand-write `.xlsx` files by manually zipping OOXML parts. Always generate the workbook through `scripts/generate_excel_report.py` or another real Excel library such as `openpyxl`. A hand-written workbook can pass `unzip -t` but still fail in Excel when relationship namespaces or worksheet targets are invalid.
+Use `scripts/generate_html_report.py` for deterministic output. The HTML report should be self-contained: no external CSS, JavaScript, fonts, or images.
 
-The main workbook should contain:
+The report should contain:
 
 1. `IT測試報告`
    - Follows the department template sections:
@@ -114,13 +113,19 @@ The main workbook should contain:
    - The `情境` section should list positive and negative test scenarios grouped by changed function.
 
 2. `測試明細`
-   - One row per changed function and scenario.
+   - One table row per changed function and scenario.
    - Include function, file, change type, positive case/result, negative case/result, NUnit test name, and notes.
 
 3. `執行結果`
    - Include branch, base tag, commit, build result, NUnit result, coverage result, report path, and push decision.
 
-See `references/excel-report-template.md` for the field mapping.
+4. `驗證資料`
+   - Include the input JSON paths used to generate the report.
+   - Include changed files/functions from diff analysis.
+   - Include restore/build/test command, exit code, result, and output tail.
+   - Include tests-json payload summary when provided.
+
+See `references/html-report-template.md` for the field mapping.
 
 ## Push Gate
 
@@ -130,7 +135,7 @@ Push is allowed only when:
 - Every changed function has at least one positive NUnit test.
 - Every changed function has at least one negative NUnit test.
 - All positive and negative tests pass.
-- Excel report is generated successfully.
+- HTML report is generated successfully.
 
 If any condition fails, report:
 
@@ -151,6 +156,6 @@ Do not run `git push` unless the user explicitly asks after seeing the report.
 Use scripts when they fit the repo:
 - `scripts/analyze_diff.py` summarizes branch/tag diff and likely changed C# functions.
 - `scripts/run_build_test.py` runs restore/build/test and writes a JSON result.
-- `scripts/generate_excel_report.py` creates the department-style `.xlsx` from JSON.
+- `scripts/generate_html_report.py` creates the department-style `.html` from JSON.
 
 The scripts are helpers, not a substitute for engineering judgment. Inspect generated tests before treating the gate as passed.

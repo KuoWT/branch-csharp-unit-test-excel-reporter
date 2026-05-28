@@ -1,10 +1,10 @@
-# Excel Report Template
+# HTML Report Template
 
-Generate a modern `.xlsx` workbook with these worksheets.
+Generate a standalone UTF-8 `.html` report with these sections.
 
 ## IT測試報告
 
-This sheet mirrors the department test report template.
+This section mirrors the department test report template.
 
 Top fields:
 
@@ -68,14 +68,32 @@ Columns:
 | NUnit Test | Pass/Fail | Command output summary |
 | 正向測試覆蓋 | Pass/Fail | Every changed function has a positive test |
 | 反向測試覆蓋 | Pass/Fail | Every changed function has a negative test |
-| Excel Report | Pass/Fail | Workbook generated |
+| HTML Report | Pass/Fail | Report generated |
 | Push Allowed | Yes/No | Yes only if all gates pass |
+
+## 驗證資料
+
+This section must include the data used to validate the report decision.
+
+Include:
+
+| Item | Meaning |
+|---|---|
+| Diff JSON | Path passed to `--diff-json` |
+| Build JSON | Path passed to `--build-json` |
+| Tests JSON | Path passed to `--tests-json`, if any |
+| Diff Range | Tag-to-branch comparison range |
+| Changed Files | Changed C# files used for test generation |
+| Changed Functions | Class/function pairs used for coverage checks |
+| Restore Command | Command, exit code, result, and output tail |
+| Build Command | Command, exit code, result, and output tail |
+| NUnit Test Command | Command, exit code, result, and output tail |
+| Test Payload | Positive/negative case data from tests-json, if provided |
 
 ## Formatting
 
-- Freeze the header row on detail sheets.
-- Use filters on tabular sheets.
-- Use green fill for `Pass` and `Yes`.
-- Use red fill for `Fail`, `Missing`, `Inconclusive`, and `No`.
-- Keep the main report printable in portrait orientation.
-- Use wrapped text for scenario and notes fields.
+- Use a printable, self-contained HTML page.
+- Use readable tables with sticky-looking headers through CSS only; no JavaScript required.
+- Use green badges for `Pass` and `Yes`.
+- Use red badges for `Fail`, `Missing`, `Inconclusive`, and `No`.
+- Use wrapped text for scenario, command output, and notes fields.
