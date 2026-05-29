@@ -5,8 +5,30 @@
 Every changed function must have both:
 - Positive test coverage.
 - Negative test coverage.
+- Positive and negative input descriptions.
+- Positive and negative output descriptions.
 
 Both must pass before push can be allowed.
+
+Coverage checks apply only to files/functions changed in the tag-to-branch diff. Tests for unchanged functions may exist, but they must not be counted as coverage for the report gate.
+
+## Test Project Placement
+
+If a suitable NUnit test project already exists, add the new tests there.
+
+If no suitable NUnit test project exists:
+
+1. Create a new NUnit project under `tests/<DllProject>.Tests`.
+2. Add a project reference to the changed DLL project.
+3. Add the test project to the solution when a `.sln` exists.
+4. Mirror the changed production path under a `DiffCoverage` folder.
+
+Example:
+
+```text
+src/BillingDll/FeeCalculator.cs
+tests/BillingDll.Tests/DiffCoverage/src/BillingDll/FeeCalculatorTests.cs
+```
 
 ## Positive Tests
 
@@ -15,6 +37,7 @@ Positive tests should cover:
 - Required customer/package/site combinations when relevant.
 - Expected return values, state changes, or output DTO fields.
 - Successful external dependency handling using mocks/fakes if the repo already uses them.
+- A clear input description and expected output description for the HTML report.
 
 ## Negative Tests
 
@@ -27,6 +50,7 @@ Negative tests should cover at least one relevant invalid scenario:
 - Package not allowed.
 - Missing required data.
 - Expected exception.
+- A clear invalid input description and expected error/exception output description for the HTML report.
 
 ## Naming
 

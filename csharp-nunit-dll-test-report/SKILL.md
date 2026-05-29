@@ -41,7 +41,11 @@ Defaults:
    - DLL project `.csproj`
    - existing test project
    - existing NUnit package/version and naming style
-7. Generate or update NUnit tests.
+7. Create or update the NUnit test project:
+   - If a suitable NUnit test project already exists, add tests there.
+   - If no suitable test project exists, create one with `dotnet new nunit`, add a project reference to the changed DLL project, and add it to the solution.
+   - Place tests for diff-changed code near a mirrored path in the test project, for example `tests/<DllProject>.Tests/DiffCoverage/<source-relative-path>/<ClassName>Tests.cs`.
+   - Only add unit tests for files/functions in the `base_tag..branch` diff scope.
 8. Run restore/build/test using the repo's existing commands where available. This step is required before generating the final report:
    - `dotnet restore`
    - `dotnet build`
@@ -114,7 +118,8 @@ The report should contain:
 
 2. `測試明細`
    - One table row per changed function and scenario.
-   - Include function, file, change type, positive case/result, negative case/result, NUnit test name, and notes.
+   - Include function, file, change type, positive case/input/output/result, negative case/input/output/result, NUnit test name, and notes.
+   - Coverage status must be calculated only for files/functions in the diff scope. Tests outside the diff scope may be listed in `驗證資料`, but must not make coverage pass.
 
 3. `執行結果`
    - Include branch, base tag, commit, build result, NUnit result, coverage result, report path, and push decision.
@@ -124,6 +129,7 @@ The report should contain:
    - Include changed files/functions from diff analysis.
    - Include restore/build/test command, exit code, result, and output tail.
    - Include tests-json payload summary when provided.
+   - Include ignored out-of-scope test payload rows when tests-json contains cases outside the diff scope.
 
 See `references/html-report-template.md` for the field mapping.
 
@@ -135,6 +141,7 @@ Push is allowed only when:
 - Every changed function has at least one positive NUnit test.
 - Every changed function has at least one negative NUnit test.
 - All positive and negative tests pass.
+- Positive and negative test rows include input and output descriptions for each changed function.
 - HTML report is generated successfully.
 
 If any condition fails, report:
@@ -155,6 +162,7 @@ Do not run `git push` unless the user explicitly asks after seeing the report.
 
 Use scripts when they fit the repo:
 - `scripts/analyze_diff.py` summarizes branch/tag diff and likely changed C# functions.
+- `scripts/scaffold_nunit_test_project.py` creates a NUnit test project when the repo does not already have a suitable one.
 - `scripts/run_build_test.py` runs restore/build/test and writes a JSON result.
 - `scripts/generate_html_report.py` creates the department-style `.html` from JSON.
 

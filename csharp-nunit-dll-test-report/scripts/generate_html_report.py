@@ -42,9 +42,15 @@ def badge(value) -> str:
     return f'<span class="badge {status_class(value)}">{esc(value)}</span>'
 
 
-def collect_scenarios(diff: dict, tests: list[dict]) -> list[dict]:
-    if tests:
-        return tests
+def scenario_key(row: dict) -> tuple[str, str, str]:
+    return (
+        str(row.get("file", "")),
+        str(row.get("class", "")),
+        str(row.get("function", "")),
+    )
+
+
+def diff_scope_rows(diff: dict) -> list[dict]:
     rows = []
     for item in diff.get("files", []):
         methods = item.get("methods") or [{"class": "", "function": "(unknown)"}]
@@ -57,13 +63,34 @@ def collect_scenarios(diff: dict, tests: list[dict]) -> list[dict]:
                     "change_type": item.get("change_type", "Unknown"),
                     "positive_case": "",
                     "positive_result": "Missing",
+                    "positive_input": "",
+                    "positive_output": "",
                     "negative_case": "",
                     "negative_result": "Missing",
+                    "negative_input": "",
+                    "negative_output": "",
                     "nunit_test": "",
                     "notes": "Test case requires implementation.",
                 }
             )
     return rows
+
+
+def collect_scenarios(diff: dict, tests: list[dict]) -> tuple[list[dict], list[dict]]:
+    diff_rows = diff_scope_rows(diff)
+    diff_keys = {scenario_key(row) for row in diff_rows}
+    by_key = {scenario_key(row): row for row in diff_rows}
+    out_of_scope = []
+
+    for test in tests:
+        key = scenario_key(test)
+        if key not in diff_keys:
+            out_of_scope.append(test)
+            continue
+        merged = {**by_key[key], **test}
+        by_key[key] = merged
+
+    return list(by_key.values()), out_of_scope
 
 
 def table(headers: list[str], rows: list[list[str]], status_columns: set[int] | None = None) -> str:
@@ -139,11 +166,21 @@ def main() -> int:
     build = load_json(args.build_json)
     tests_payload = load_json(args.tests_json) if args.tests_json else {}
     tests = tests_payload.get("tests", []) if tests_payload else []
-    scenarios = collect_scenarios(diff, tests)
+    scenarios, out_of_scope_tests = collect_scenarios(diff, tests)
 
     build_pass = build.get("overall") == "Pass"
-    positive_ok = all(str(s.get("positive_result", "")).lower() == "pass" for s in scenarios) and bool(scenarios)
-    negative_ok = all(str(s.get("negative_result", "")).lower() == "pass" for s in scenarios) and bool(scenarios)
+    positive_ok = all(
+        str(s.get("positive_result", "")).lower() == "pass"
+        and str(s.get("positive_input", "")).strip()
+        and str(s.get("positive_output", "")).strip()
+        for s in scenarios
+    ) and bool(scenarios)
+    negative_ok = all(
+        str(s.get("negative_result", "")).lower() == "pass"
+        and str(s.get("negative_input", "")).strip()
+        and str(s.get("negative_output", "")).strip()
+        for s in scenarios
+    ) and bool(scenarios)
     push_allowed = build_pass and positive_ok and negative_ok
     push_label = "Yes" if push_allowed else "No"
 
@@ -177,6 +214,8 @@ def main() -> int:
                     s.get("class", ""),
                     s.get("function", ""),
                     s.get(case_key, ""),
+                    s.get("positive_input" if kind == "Positive" else "negative_input", ""),
+                    s.get("positive_output" if kind == "Positive" else "negative_output", ""),
                     s.get("nunit_test", ""),
                     "Pass expected behavior" if kind == "Positive" else "Reject invalid behavior",
                     s.get(result_key, ""),
@@ -196,8 +235,12 @@ def main() -> int:
             s.get("function", ""),
             s.get("change_type", ""),
             s.get("positive_case", ""),
+            s.get("positive_input", ""),
+            s.get("positive_output", ""),
             s.get("positive_result", "Missing"),
             s.get("negative_case", ""),
+            s.get("negative_input", ""),
+            s.get("negative_output", ""),
             s.get("negative_result", "Missing"),
             s.get("notes", ""),
         ]
@@ -211,8 +254,8 @@ def main() -> int:
         ("Restore", build.get("restore", {}).get("result", "Unknown"), ""),
         ("Build", build.get("build", {}).get("result", "Unknown"), ""),
         ("NUnit Test", build.get("test", {}).get("result", "Unknown"), ""),
-        ("正向測試覆蓋", "Pass" if positive_ok else "Fail", "每個 function 必須有正向測試且 pass"),
-        ("反向測試覆蓋", "Pass" if negative_ok else "Fail", "每個 function 必須有反向測試且 pass"),
+        ("正向測試覆蓋", "Pass" if positive_ok else "Fail", "每個 diff function 必須有正向測試、輸入、輸出且 pass"),
+        ("反向測試覆蓋", "Pass" if negative_ok else "Fail", "每個 diff function 必須有反向測試、輸入、輸出且 pass"),
         ("HTML Report", "Pass", args.output),
         ("Push Allowed", push_label, "全部 gate pass 才允許 push"),
     ]
@@ -223,8 +266,10 @@ def main() -> int:
         ("Tests JSON", args.tests_json),
         ("Diff Range", diff.get("diff_range", "")),
         ("Working Tree Dirty", diff.get("working_tree_dirty", "")),
+        ("Coverage Scope", "Diff changed files/functions only"),
         ("Scenario Count", len(scenarios)),
         ("Tests Payload Count", len(tests)),
+        ("Out-of-Scope Tests Ignored", len(out_of_scope_tests)),
     ]
 
     test_payload_rows = [
@@ -233,13 +278,29 @@ def main() -> int:
             item.get("class", ""),
             item.get("function", ""),
             item.get("positive_case", ""),
+            item.get("positive_input", ""),
+            item.get("positive_output", ""),
             item.get("positive_result", ""),
             item.get("negative_case", ""),
+            item.get("negative_input", ""),
+            item.get("negative_output", ""),
             item.get("negative_result", ""),
             item.get("nunit_test", ""),
             item.get("notes", ""),
         ]
         for item in tests
+    ]
+
+    out_of_scope_rows = [
+        [
+            item.get("file", ""),
+            item.get("class", ""),
+            item.get("function", ""),
+            item.get("positive_case", ""),
+            item.get("negative_case", ""),
+            "Ignored: outside diff scope",
+        ]
+        for item in out_of_scope_tests
     ]
 
     html_text = f"""<!doctype html>
@@ -403,12 +464,12 @@ def main() -> int:
 
     <section>
       <h2>情境</h2>
-      {table(["編號", "類型", "檔案", "類別", "Function", "測試情境", "NUnit Test", "預期結果", "實際結果", "結果", "備註"], scenario_rows, {9})}
+      {table(["編號", "類型", "檔案", "類別", "Function", "測試情境", "輸入", "輸出", "NUnit Test", "預期結果", "實際結果", "結果", "備註"], scenario_rows, {11})}
     </section>
 
     <section>
       <h2>測試明細</h2>
-      {table(["Branch", "Base Tag", "Commit", "File", "Class", "Function", "Change Type", "Positive Case", "Positive Result", "Negative Case", "Negative Result", "Notes"], detail_rows, {8, 10})}
+      {table(["Branch", "Base Tag", "Commit", "File", "Class", "Function", "Change Type", "Positive Case", "Positive Input", "Positive Output", "Positive Result", "Negative Case", "Negative Input", "Negative Output", "Negative Result", "Notes"], detail_rows, {10, 14})}
     </section>
 
     <section>
@@ -427,7 +488,10 @@ def main() -> int:
       {table(["Step", "Command", "Exit Code", "Result", "Output Tail"], build_step_rows(build), {3})}
 
       <h3>Tests JSON 案例資料</h3>
-      {table(["File", "Class", "Function", "Positive Case", "Positive Result", "Negative Case", "Negative Result", "NUnit Test", "Notes"], test_payload_rows, {4, 6})}
+      {table(["File", "Class", "Function", "Positive Case", "Positive Input", "Positive Output", "Positive Result", "Negative Case", "Negative Input", "Negative Output", "Negative Result", "NUnit Test", "Notes"], test_payload_rows, {6, 10})}
+
+      <h3>非 Diff 範圍案例</h3>
+      {table(["File", "Class", "Function", "Positive Case", "Negative Case", "處理方式"], out_of_scope_rows)}
 
       <details>
         <summary>Diff JSON 原始資料</summary>

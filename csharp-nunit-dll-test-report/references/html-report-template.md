@@ -29,6 +29,8 @@ Scenario table columns:
 | 類別 | Class name if known |
 | Function | Changed function |
 | 測試情境 | Human-readable test scenario |
+| 輸入 | Input data or preconditions used by the test |
+| 輸出 | Expected or actual output asserted by the test |
 | NUnit Test | NUnit test method name |
 | 預期結果 | Expected behavior |
 | 實際結果 | Test result or failure message |
@@ -49,8 +51,12 @@ Columns:
 | Function | Changed function |
 | Change Type | Added, Modified, Deleted, or Unknown |
 | Positive Case | Positive NUnit scenario/test |
+| Positive Input | Input data/preconditions for the positive test |
+| Positive Output | Expected or asserted output for the positive test |
 | Positive Result | Pass, Fail, Missing, or Inconclusive |
 | Negative Case | Negative NUnit scenario/test |
+| Negative Input | Input data/preconditions for the negative test |
+| Negative Output | Expected exception, error, or rejection output |
 | Negative Result | Pass, Fail, Missing, or Inconclusive |
 | Notes | Details or follow-up |
 
@@ -85,10 +91,12 @@ Include:
 | Diff Range | Tag-to-branch comparison range |
 | Changed Files | Changed C# files used for test generation |
 | Changed Functions | Class/function pairs used for coverage checks |
+| Coverage Scope | Must be `Diff changed files/functions only` |
 | Restore Command | Command, exit code, result, and output tail |
 | Build Command | Command, exit code, result, and output tail |
 | NUnit Test Command | Command, exit code, result, and output tail |
 | Test Payload | Positive/negative case data from tests-json, if provided |
+| Out-of-Scope Tests | tests-json rows ignored because they are outside the diff scope |
 
 ## Formatting
 

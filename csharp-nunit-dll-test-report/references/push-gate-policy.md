@@ -10,7 +10,8 @@ Push allowed requires:
 4. Every changed function has a positive test.
 5. Every changed function has a negative test.
 6. All positive and negative tests pass.
-7. Excel report is generated.
+7. Positive and negative input/output descriptions are present.
+8. HTML report is generated.
 
 Output one of:
 
@@ -22,4 +23,4 @@ PASS: 可 push
 FAIL: 不可 push
 ```
 
-When failed, list the blocking items and point to the Excel report.
+When failed, list the blocking items and point to the HTML report.
