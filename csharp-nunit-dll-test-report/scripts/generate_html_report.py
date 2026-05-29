@@ -147,6 +147,17 @@ def changed_item_rows(diff: dict) -> list[list[str]]:
     return rows
 
 
+def ignored_file_rows(diff: dict) -> list[list[str]]:
+    return [
+        [
+            item.get("file", ""),
+            item.get("change_type", "Unknown"),
+            item.get("reason", "Ignored"),
+        ]
+        for item in diff.get("ignored_files", [])
+    ]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--diff-json", required=True)
@@ -270,6 +281,7 @@ def main() -> int:
         ("Scenario Count", len(scenarios)),
         ("Tests Payload Count", len(tests)),
         ("Out-of-Scope Tests Ignored", len(out_of_scope_tests)),
+        ("Ignored Non-CS Files", len(diff.get("ignored_files", []))),
     ]
 
     test_payload_rows = [
@@ -483,6 +495,9 @@ def main() -> int:
 
       <h3>異動檔案與 Function</h3>
       {table(["File", "Change Type", "Class", "Function"], changed_item_rows(diff))}
+
+      <h3>忽略的非 .cs 檔案</h3>
+      {table(["File", "Change Type", "Reason"], ignored_file_rows(diff))}
 
       <h3>Restore / Build / NUnit Test 輸出</h3>
       {table(["Step", "Command", "Exit Code", "Result", "Output Tail"], build_step_rows(build), {3})}

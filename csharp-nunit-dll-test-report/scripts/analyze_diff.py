@@ -76,13 +76,26 @@ def main() -> int:
     changed = git(["diff", "--name-status", diff_range], cwd)
 
     files = []
+    ignored_files = []
     for line in changed.splitlines():
         if not line.strip():
             continue
         parts = line.split("\t")
         status_code = parts[0]
         file_path = parts[-1]
-        if not file_path.endswith(".cs"):
+        if Path(file_path).suffix.lower() != ".cs":
+            ignored_files.append(
+                {
+                    "file": file_path,
+                    "change_type": {
+                        "A": "Added",
+                        "M": "Modified",
+                        "D": "Deleted",
+                        "R": "Renamed",
+                    }.get(status_code[:1], "Unknown"),
+                    "reason": "Ignored because extension is not .cs",
+                }
+            )
             continue
         methods = changed_methods_for_file(cwd / file_path)
         files.append(
@@ -105,6 +118,7 @@ def main() -> int:
         "working_tree_dirty": bool(status),
         "diff_range": diff_range,
         "files": files,
+        "ignored_files": ignored_files,
     }
 
     text = json.dumps(result, ensure_ascii=False, indent=2)

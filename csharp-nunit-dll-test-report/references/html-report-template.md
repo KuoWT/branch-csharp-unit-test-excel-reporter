@@ -92,11 +92,14 @@ Include:
 | Changed Files | Changed C# files used for test generation |
 | Changed Functions | Class/function pairs used for coverage checks |
 | Coverage Scope | Must be `Diff changed files/functions only` |
+| Ignored Non-CS Files | Changed files ignored because their extension is not `.cs` |
 | Restore Command | Command, exit code, result, and output tail |
 | Build Command | Command, exit code, result, and output tail |
 | NUnit Test Command | Command, exit code, result, and output tail |
 | Test Payload | Positive/negative case data from tests-json, if provided |
 | Out-of-Scope Tests | tests-json rows ignored because they are outside the diff scope |
+
+If there are no changed `.cs` files/functions, scenario and detail tables should be empty. Do not generate placeholder test items for non-`.cs` changes.
 
 ## Formatting
 

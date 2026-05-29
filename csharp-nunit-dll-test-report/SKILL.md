@@ -35,7 +35,7 @@ Defaults:
    - Prefer `git describe --tags --abbrev=0 <branch>^` when the branch has commits after a tag.
    - Fall back to `git describe --tags --abbrev=0 <branch>`.
 4. Compare `base_tag..branch`.
-5. Identify changed `.cs` files and changed functions.
+5. Identify changed `.cs` files and changed functions. Only files whose extension is `.cs` may generate unit tests; all other changed files must be ignored for test generation.
 6. Inspect the existing solution/project layout:
    - `.sln`
    - DLL project `.csproj`
@@ -45,7 +45,8 @@ Defaults:
    - If a suitable NUnit test project already exists, add tests there.
    - If no suitable test project exists, create one with `dotnet new nunit`, add a project reference to the changed DLL project, and add it to the solution.
    - Place tests for diff-changed code near a mirrored path in the test project, for example `tests/<DllProject>.Tests/DiffCoverage/<source-relative-path>/<ClassName>Tests.cs`.
-   - Only add unit tests for files/functions in the `base_tag..branch` diff scope.
+   - Only add unit tests for `.cs` files/functions in the `base_tag..branch` diff scope.
+   - If the diff contains no `.cs` changes, do not create fake test rows. Leave test items empty and record ignored non-`.cs` files in the report validation data.
 8. Run restore/build/test using the repo's existing commands where available. This step is required before generating the final report:
    - `dotnet restore`
    - `dotnet build`
@@ -120,6 +121,7 @@ The report should contain:
    - One table row per changed function and scenario.
    - Include function, file, change type, positive case/input/output/result, negative case/input/output/result, NUnit test name, and notes.
    - Coverage status must be calculated only for files/functions in the diff scope. Tests outside the diff scope may be listed in `驗證資料`, but must not make coverage pass.
+   - If there are no changed `.cs` files/functions, this table should be empty.
 
 3. `執行結果`
    - Include branch, base tag, commit, build result, NUnit result, coverage result, report path, and push decision.
@@ -130,6 +132,7 @@ The report should contain:
    - Include restore/build/test command, exit code, result, and output tail.
    - Include tests-json payload summary when provided.
    - Include ignored out-of-scope test payload rows when tests-json contains cases outside the diff scope.
+   - Include changed non-`.cs` files ignored by test generation.
 
 See `references/html-report-template.md` for the field mapping.
 

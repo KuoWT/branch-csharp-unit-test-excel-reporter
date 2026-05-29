@@ -10,7 +10,9 @@ Every changed function must have both:
 
 Both must pass before push can be allowed.
 
-Coverage checks apply only to files/functions changed in the tag-to-branch diff. Tests for unchanged functions may exist, but they must not be counted as coverage for the report gate.
+Coverage checks apply only to `.cs` files/functions changed in the tag-to-branch diff. Tests for unchanged functions or non-`.cs` files may exist, but they must not be counted as coverage for the report gate.
+
+If the diff contains no `.cs` changes, do not create placeholder test cases. The report test items should remain empty.
 
 ## Test Project Placement
 
