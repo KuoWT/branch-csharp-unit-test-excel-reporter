@@ -53,7 +53,7 @@ def scenario_key(row: dict) -> tuple[str, str, str]:
 def diff_scope_rows(diff: dict) -> list[dict]:
     rows = []
     for item in diff.get("files", []):
-        methods = item.get("methods") or [{"class": "", "function": "(unknown)"}]
+        methods = item.get("methods") or []
         for method in methods:
             rows.append(
                 {
@@ -180,6 +180,8 @@ def main() -> int:
     scenarios, out_of_scope_tests = collect_scenarios(diff, tests)
 
     build_pass = build.get("overall") == "Pass"
+    build_step_pass = build.get("build", {}).get("result") == "Pass" or build_pass
+    has_testable_function_changes = bool(scenarios)
     positive_ok = all(
         str(s.get("positive_result", "")).lower() == "pass"
         and str(s.get("positive_input", "")).strip()
@@ -192,10 +194,10 @@ def main() -> int:
         and str(s.get("negative_output", "")).strip()
         for s in scenarios
     ) and bool(scenarios)
-    push_allowed = build_pass and positive_ok and negative_ok
+    push_allowed = build_step_pass if not has_testable_function_changes else build_pass and positive_ok and negative_ok
     push_label = "Yes" if push_allowed else "No"
 
-    impact = f"Base Tag {diff.get('base_tag', '')} 至 Branch {diff.get('branch', '')}，異動 C# function 共 {len(scenarios)} 筆。"
+    impact = f"Base Tag {diff.get('base_tag', '')} 至 Branch {diff.get('branch', '')}，可測 C# function 變更共 {len(scenarios)} 筆。"
     requirement = args.requirement or f"依 {diff.get('diff_range', '')} diff 產生 NUnit 正反相測試報告。"
 
     fields = [
@@ -264,11 +266,23 @@ def main() -> int:
         ("Commit", diff.get("commit", ""), "分支 HEAD"),
         ("Restore", build.get("restore", {}).get("result", "Unknown"), ""),
         ("Build", build.get("build", {}).get("result", "Unknown"), ""),
-        ("NUnit Test", build.get("test", {}).get("result", "Unknown"), ""),
-        ("正向測試覆蓋", "Pass" if positive_ok else "Fail", "每個 diff function 必須有正向測試、輸入、輸出且 pass"),
-        ("反向測試覆蓋", "Pass" if negative_ok else "Fail", "每個 diff function 必須有反向測試、輸入、輸出且 pass"),
+        (
+            "NUnit Test",
+            build.get("test", {}).get("result", "Unknown") if has_testable_function_changes else "Skipped",
+            "" if has_testable_function_changes else "無 C# 函數變更，免執行 NUnit 覆蓋驗證",
+        ),
+        (
+            "正向測試覆蓋",
+            "Pass" if positive_ok else "Skipped" if not has_testable_function_changes else "Fail",
+            "無 C# 函數變更，免正向測試" if not has_testable_function_changes else "每個 diff function 必須有正向測試、輸入、輸出且 pass",
+        ),
+        (
+            "反向測試覆蓋",
+            "Pass" if negative_ok else "Skipped" if not has_testable_function_changes else "Fail",
+            "無 C# 函數變更，免反向測試" if not has_testable_function_changes else "每個 diff function 必須有反向測試、輸入、輸出且 pass",
+        ),
         ("HTML Report", "Pass", args.output),
-        ("Push Allowed", push_label, "全部 gate pass 才允許 push"),
+        ("Push Allowed", push_label, "無 C# 函數變更時 build pass 即可 push" if not has_testable_function_changes else "全部 gate pass 才允許 push"),
     ]
 
     validation_fields = [
@@ -278,6 +292,7 @@ def main() -> int:
         ("Diff Range", diff.get("diff_range", "")),
         ("Working Tree Dirty", diff.get("working_tree_dirty", "")),
         ("Coverage Scope", "Diff changed files/functions only"),
+        ("Has Testable C# Function Changes", has_testable_function_changes),
         ("Scenario Count", len(scenarios)),
         ("Tests Payload Count", len(tests)),
         ("Out-of-Scope Tests Ignored", len(out_of_scope_tests)),

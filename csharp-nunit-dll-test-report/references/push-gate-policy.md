@@ -4,14 +4,14 @@ The skill reports whether push is allowed. It must not push unless the user expl
 
 Push allowed requires:
 
-1. Restore passes.
+1. HTML report is generated.
 2. Build passes.
-3. NUnit test command passes.
-4. Every changed function has a positive test.
-5. Every changed function has a negative test.
-6. All positive and negative tests pass.
-7. Positive and negative input/output descriptions are present.
-8. HTML report is generated.
+3. If there are no testable C# function changes, no positive/negative test coverage is required.
+4. If there are testable C# function changes, NUnit test command passes.
+5. If there are testable C# function changes, every changed function has a positive test.
+6. If there are testable C# function changes, every changed function has a negative test.
+7. If there are testable C# function changes, all positive and negative tests pass.
+8. If there are testable C# function changes, positive and negative input/output descriptions are present.
 
 Output one of:
 

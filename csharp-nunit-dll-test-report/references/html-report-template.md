@@ -92,6 +92,7 @@ Include:
 | Changed Files | Changed C# files used for test generation |
 | Changed Functions | Class/function pairs used for coverage checks |
 | Coverage Scope | Must be `Diff changed files/functions only` |
+| Has Testable C# Function Changes | Whether positive/negative coverage is required |
 | Ignored Non-CS Files | Changed files ignored because their extension is not `.cs` or because they are generated C# files |
 | Restore Command | Command, exit code, result, and output tail |
 | Build Command | Command, exit code, result, and output tail |
@@ -100,6 +101,8 @@ Include:
 | Out-of-Scope Tests | tests-json rows ignored because they are outside the diff scope |
 
 If there are no changed testable `.cs` files/functions, scenario and detail tables should be empty. Do not generate placeholder test items for non-`.cs` changes or generated C# files.
+
+If there are no testable C# function changes, push is allowed when build passes. Positive and negative coverage rows should be marked `Skipped`.
 
 ## Formatting
 

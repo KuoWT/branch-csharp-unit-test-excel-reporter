@@ -27,6 +27,19 @@ Defaults:
 - Report output is a standalone `.html` file.
 - Do not push automatically.
 
+## Compare Naming
+
+Use these names for comparison modes:
+
+| Name | Meaning |
+|---|---|
+| `latest-tag-to-branch` | Compare the latest reachable Git tag to a local branch. This is the default mode. |
+| `tag-to-tag` | Compare two version tags. Use this for 版本間比對. |
+| `commit-to-commit` | Compare two Git commits / SHAs. Use this for commit 間比對. |
+| `custom-range` | Use a user-provided Git diff range directly. |
+
+Use the wording `commit` in user-facing text. Use `commit` or `SHA` when referring to Git objects.
+
 ## Workflow
 
 1. Confirm the working tree state with `git status --short`.
@@ -139,12 +152,13 @@ See `references/html-report-template.md` for the field mapping.
 ## Push Gate
 
 Push is allowed only when:
-- `dotnet build` passes.
-- `dotnet test` passes.
-- Every changed function has at least one positive NUnit test.
-- Every changed function has at least one negative NUnit test.
-- All positive and negative tests pass.
-- Positive and negative test rows include input and output descriptions for each changed function.
+- If there are no testable C# function changes, `dotnet build` passes.
+- If there are testable C# function changes, `dotnet build` passes.
+- If there are testable C# function changes, `dotnet test` passes.
+- If there are testable C# function changes, every changed function has at least one positive NUnit test.
+- If there are testable C# function changes, every changed function has at least one negative NUnit test.
+- If there are testable C# function changes, all positive and negative tests pass.
+- If there are testable C# function changes, positive and negative test rows include input and output descriptions for each changed function.
 - HTML report is generated successfully.
 
 If any condition fails, report:
