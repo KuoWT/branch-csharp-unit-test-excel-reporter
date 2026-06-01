@@ -1,11 +1,11 @@
 ---
 name: csharp-nunit-dll-test-report
-description: Use when generating positive and negative NUnit test cases and an HTML IT test report for a C# DLL project by comparing a local branch against the latest Git tag. The workflow analyzes changed C# functions, creates or updates NUnit tests, runs dotnet build/test, generates a department-style .html report, and decides whether the branch is allowed to push.
+description: Use when generating NUnit unit tests and an HTML IT test report for a C# DLL project by comparing a local branch against the latest Git tag. The workflow analyzes changed C# functions, creates or updates NUnit tests, runs dotnet build/test, generates a department-style .html report, and decides whether the branch is allowed to push.
 ---
 
 # C# NUnit DLL Test Report
 
-Use this skill when the user asks to generate a positive/negative test report for a C# DLL project, especially with wording like "指定 xxx 分支產生正反相測試報告".
+Use this skill when the user asks to generate a unit test report for a C# DLL project, especially with wording like "指定 xxx 分支產生單元測試報告".
 
 ## Inputs
 

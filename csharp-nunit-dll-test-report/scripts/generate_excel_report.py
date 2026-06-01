@@ -135,7 +135,7 @@ def main() -> int:
         ("站點", args.site),
         ("IT影響評估", f"Base Tag {diff.get('base_tag', '')} 至 Branch {diff.get('branch', '')}，異動 C# function 共 {len(scenarios)} 筆。"),
         ("申請單號", args.request_no),
-        ("需求內容", args.requirement or f"依 {diff.get('diff_range', '')} diff 產生 NUnit 正反相測試報告。"),
+        ("需求內容", args.requirement or f"依 {diff.get('diff_range', '')} diff 產生 NUnit 單元測試報告。"),
         ("User 測試人員", args.user_tester),
         ("限定客戶", args.customer),
         ("限定PACKAGE", args.package),

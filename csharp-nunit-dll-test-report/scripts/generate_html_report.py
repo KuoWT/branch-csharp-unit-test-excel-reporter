@@ -198,7 +198,7 @@ def main() -> int:
     push_label = "Yes" if push_allowed else "No"
 
     impact = f"Base Tag {diff.get('base_tag', '')} 至 Branch {diff.get('branch', '')}，可測 C# function 變更共 {len(scenarios)} 筆。"
-    requirement = args.requirement or f"依 {diff.get('diff_range', '')} diff 產生 NUnit 正反相測試報告。"
+    requirement = args.requirement or f"依 {diff.get('diff_range', '')} diff 產生 NUnit 單元測試報告。"
 
     fields = [
         ("站點", args.site),
@@ -335,7 +335,7 @@ def main() -> int:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>C# NUnit 正反相測試報告</title>
+  <title>C# NUnit 單元測試報告</title>
   <style>
     :root {{
       --ink: #17202a;
