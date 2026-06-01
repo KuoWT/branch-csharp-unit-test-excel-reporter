@@ -39,6 +39,18 @@ Scenario table columns:
 
 ## 測試明細
 
+Function coverage columns:
+
+| Column | Meaning |
+|---|---|
+| File | Changed file |
+| Class | Changed class if known |
+| Function | Changed function |
+| Positive Unit Test | Pass, Missing Parameters, Missing, Fail, or Inconclusive |
+| Negative Unit Test | Pass, Missing Parameters, Missing, Fail, or Inconclusive |
+| Function Coverage | Pass only when positive and negative unit tests both pass |
+| 缺少參數 | Missing case/input/output fields the user must provide |
+
 Columns:
 
 | Column | Meaning |

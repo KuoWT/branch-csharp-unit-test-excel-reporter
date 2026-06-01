@@ -31,7 +31,7 @@ def status_class(value) -> str:
     text = str(value or "").strip().lower()
     if text in {"pass", "yes", "可 push"}:
         return "pass"
-    if text in {"fail", "no", "missing", "inconclusive", "不可 push", "unknown"}:
+    if text in {"fail", "no", "missing", "missing parameters", "inconclusive", "不可 push", "unknown"}:
         return "fail"
     if text in {"skipped", "not run"}:
         return "warn"
@@ -158,6 +158,49 @@ def ignored_file_rows(diff: dict) -> list[list[str]]:
     ]
 
 
+def case_state(row: dict, prefix: str) -> tuple[str, list[str]]:
+    missing = []
+    if not str(row.get(f"{prefix}_case", "")).strip():
+        missing.append("case")
+    if not str(row.get(f"{prefix}_input", "")).strip():
+        missing.append("input")
+    if not str(row.get(f"{prefix}_output", "")).strip():
+        missing.append("output")
+    result = str(row.get(f"{prefix}_result", "")).strip()
+    if missing:
+        return "Missing Parameters", missing
+    if result.lower() == "pass":
+        return "Pass", []
+    if not result or result == "Missing":
+        return "Missing", ["result"]
+    return result, []
+
+
+def function_coverage_rows(scenarios: list[dict]) -> list[list[str]]:
+    rows = []
+    for item in scenarios:
+        positive_state, positive_missing = case_state(item, "positive")
+        negative_state, negative_missing = case_state(item, "negative")
+        overall = "Pass" if positive_state == "Pass" and negative_state == "Pass" else "Missing Parameters"
+        missing = []
+        if positive_missing:
+            missing.append(f"positive: {', '.join(positive_missing)}")
+        if negative_missing:
+            missing.append(f"negative: {', '.join(negative_missing)}")
+        rows.append(
+            [
+                item.get("file", ""),
+                item.get("class", ""),
+                item.get("function", ""),
+                positive_state,
+                negative_state,
+                overall,
+                "; ".join(missing) if missing else "",
+            ]
+        )
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--diff-json", required=True)
@@ -259,6 +302,7 @@ def main() -> int:
         ]
         for s in scenarios
     ]
+    coverage_rows = function_coverage_rows(scenarios)
 
     result_rows = [
         ("Branch", diff.get("branch", ""), "指定本地分支"),
@@ -496,6 +540,10 @@ def main() -> int:
 
     <section>
       <h2>測試明細</h2>
+      <h3>Function 覆蓋狀態</h3>
+      {table(["File", "Class", "Function", "Positive Unit Test", "Negative Unit Test", "Function Coverage", "缺少參數"], coverage_rows, {3, 4, 5})}
+
+      <h3>單元測試案例明細</h3>
       {table(["Branch", "Base Tag", "Commit", "File", "Class", "Function", "Change Type", "Positive Case", "Positive Input", "Positive Output", "Positive Result", "Negative Case", "Negative Input", "Negative Output", "Negative Result", "Notes"], detail_rows, {10, 14})}
     </section>
 

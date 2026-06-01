@@ -79,6 +79,8 @@ For every changed function, create or verify:
 - Test names clearly identify the target function and scenario.
 - Assertions check behavior, not only "no exception".
 - Negative tests cover invalid input, null/empty input, boundary values, permission/customer/package restrictions, or expected exceptions where relevant.
+- The HTML report must show per-function unit test coverage.
+- If a function is missing a case, input, or output description, mark it as `Missing Parameters` and ask the user to provide the missing parameters before treating the gate as pass.
 
 When behavior is unclear, generate a test skeleton with `Assert.Inconclusive(...)` only as a temporary marker and mark the report result as `Missing` or `Fail`. Do not count inconclusive tests as pass.
 
@@ -132,6 +134,7 @@ The report should contain:
 
 2. `測試明細`
    - One table row per changed function and scenario.
+   - Include a per-function coverage table showing positive unit test status, negative unit test status, overall function coverage, and missing parameters.
    - Include function, file, change type, positive case/input/output/result, negative case/input/output/result, NUnit test name, and notes.
    - Coverage status must be calculated only for files/functions in the diff scope. Tests outside the diff scope may be listed in `驗證資料`, but must not make coverage pass.
    - If there are no changed `.cs` files/functions, this table should be empty.
